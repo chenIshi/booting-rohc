@@ -1,0 +1,64 @@
+services:
+  ue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      public_net:
+        ipv4_address: 192.168.7.1
+    depends_on:
+      compressor:
+        condition: service_healthy
+      decompressor:
+        condition: service_healthy
+
+  compressor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      public_net:
+        ipv4_address: 192.168.7.2
+    healthcheck:
+      test: ["executable", "arg"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  decompressor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      public_net:
+        ipv4_address: 192.168.7.3
+    healthcheck:
+      test: ["executable", "arg"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  ext:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      public_net:
+        ipv4_address: 192.168.7.4
+    depends_on:
+      compressor:
+        condition: service_healthy
+      decompressor:
+        condition: service_healthy
+
+networks:
+  public_net:
+    driver: bridge
+    name: rohc-public-net
+    ipam:
+      config:
+        - subnet: 192.168.7.128/8
+    driver_opts:
+      com.docker.network.bridge.name: "rohc-net"
